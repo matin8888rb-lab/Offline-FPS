@@ -2,6 +2,8 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using OfflineFPS.Core;
 using OfflineFPS.Player;
 using OfflineFPS.AI;
@@ -54,6 +56,7 @@ namespace OfflineFPS.EditorTools
             SerializedObject serialized = new SerializedObject(controller);
             serialized.FindProperty("cameraPivot").objectReferenceValue = cameraObject.transform;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+            CreateMobileControls(controller);
 
             Vector3[] checkpointPositions = {
                 new Vector3(-10f, 1f, -8f), new Vector3(10f, 1f, -8f),
@@ -78,6 +81,9 @@ namespace OfflineFPS.EditorTools
             bot.transform.SetParent(root.transform);
             bot.transform.position = new Vector3(0f, 1f, 10f);
             bot.GetComponent<Renderer>().sharedMaterial = botMat;
+            Rigidbody botBody = bot.AddComponent<Rigidbody>();
+            botBody.isKinematic = true;
+            botBody.useGravity = false;
             bot.AddComponent<BotAgent>().SetRoute(route);
             ArenaParticipant botParticipant = bot.AddComponent<ArenaParticipant>();
             botParticipant.Configure("Rival 01", TeamId.Orange);
@@ -92,6 +98,45 @@ namespace OfflineFPS.EditorTools
             EditorSceneManager.SaveScene(scene, "Assets/Scenes/Main.unity");
             AssetDatabase.SaveAssets();
             EditorUtility.DisplayDialog("Offline FPS", "Starter arena created at Assets/Scenes/Main.unity. Press Play to test keyboard movement and checkpoint scoring.", "OK");
+        }
+
+        private static void CreateMobileControls(FirstPersonController player)
+        {
+            GameObject eventSystem = new GameObject("EventSystem");
+            eventSystem.AddComponent<EventSystem>();
+            eventSystem.AddComponent<StandaloneInputModule>();
+
+            GameObject canvasObject = new GameObject("MobileControls", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            Canvas canvas = canvasObject.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+
+            GameObject movePad = new GameObject("Move Pad", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            movePad.transform.SetParent(canvasObject.transform, false);
+            RectTransform moveRect = movePad.GetComponent<RectTransform>();
+            moveRect.anchorMin = new Vector2(0f, 0f);
+            moveRect.anchorMax = new Vector2(0f, 0f);
+            moveRect.pivot = new Vector2(0f, 0f);
+            moveRect.anchoredPosition = new Vector2(55f, 55f);
+            moveRect.sizeDelta = new Vector2(230f, 230f);
+            Image moveImage = movePad.GetComponent<Image>();
+            moveImage.color = new Color(0.2f, 0.85f, 0.8f, 0.22f);
+            movePad.AddComponent<MobileMovePad>().SetPlayer(player);
+
+            GameObject lookArea = new GameObject("Look Area", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            lookArea.transform.SetParent(canvasObject.transform, false);
+            RectTransform lookRect = lookArea.GetComponent<RectTransform>();
+            lookRect.anchorMin = new Vector2(0.48f, 0f);
+            lookRect.anchorMax = new Vector2(1f, 1f);
+            lookRect.offsetMin = Vector2.zero;
+            lookRect.offsetMax = Vector2.zero;
+            Image lookImage = lookArea.GetComponent<Image>();
+            lookImage.color = new Color(1f, 1f, 1f, 0.015f);
+            lookImage.raycastTarget = true;
+            lookArea.AddComponent<TouchLook>().SetPlayer(player);
         }
 
         private static void Cube(string name, Vector3 position, Vector3 scale, Material material, Transform parent)
