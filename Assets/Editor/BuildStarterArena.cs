@@ -103,10 +103,20 @@ namespace OfflineFPS.EditorTools
 
         private static Material MakeMaterial(string name, Color color)
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null) shader = Shader.Find("Standard");
-            Material material = new Material(shader);
-            material.name = name; material.color = color;
+            if (!AssetDatabase.IsValidFolder("Assets/Materials"))
+                AssetDatabase.CreateFolder("Assets", "Materials");
+            string path = "Assets/Materials/" + name + ".mat";
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+                if (shader == null) shader = Shader.Find("Standard");
+                material = new Material(shader);
+                material.name = name;
+                AssetDatabase.CreateAsset(material, path);
+            }
+            material.color = color;
+            EditorUtility.SetDirty(material);
             return material;
         }
     }
