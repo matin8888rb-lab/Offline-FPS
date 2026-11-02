@@ -1,28 +1,28 @@
-# Offline FPS
+# Offline FPS — Offline Arena Prototype
 
-An original, fully offline Android first-person arena game prototype built with Unity. It is an independent project, not a Call of Duty asset or level clone.
+An original, offline first-person arena-racing prototype for Android, built with Unity. It uses a clean sci-fi sports-arena theme: collect checkpoints, race a waypoint rival, and earn points. There is no real-world weapon simulation, graphic violence, account, or network dependency.
 
-## Target
-- Android first; tuned initially for mid-range phones such as Redmi 13.
-- Offline campaign and offline bot matches.
-- Match types: Team Deathmatch and Free For All.
-- Local save data; no account or network dependency.
-- Stylized, non-graphic sci-fi presentation.
+## Current prototype systems
+- First-person movement and camera look.
+- Touch movement pad and right-side drag-to-look controls generated in the starter scene.
+- Free For All scoring and team checkpoint scoring.
+- Checkpoint trigger zones with a per-participant cooldown.
+- Lightweight offline rival bot that follows a waypoint loop.
+- Local quality presets and a 60 FPS target for mid-range Android devices.
+- Unity Editor menu command that generates a starter arena scene and saves its materials.
 
-## Unity setup
-1. Install Unity Hub on a computer and use a Unity 2022.3 LTS (or newer compatible LTS) editor with Android Build Support, Android SDK & NDK Tools, and OpenJDK.
-2. Open this repository as a Unity project.
-3. Create a scene named `Assets/Scenes/Main.unity`.
-4. Add a GameObject named `GameBootstrap` and attach `Assets/Scripts/Core/GameBootstrap.cs`.
-5. Add a player GameObject with a CharacterController, a child Camera, and `FirstPersonController`.
-6. Add bot GameObjects with NavMeshAgent and `BotAgent`; bake a NavMesh for the arena.
-7. Create UI controls and connect the public methods described in the scripts to Unity UI Buttons / EventTriggers.
-8. Add scenes to Build Settings, select Android, then build an APK.
+## Generate the starter scene
+1. Open this repository in Unity **2022.3.62f1** or a compatible Unity 2022.3 LTS editor.
+2. Wait for package import and script compilation to finish.
+3. In the Unity menu, select **Offline FPS → Build Starter Arena**.
+4. The tool creates `Assets/Scenes/Main.unity`, arena materials, a player, touch controls, four checkpoints, a rival, lighting, and the match manager.
+5. Press Play to test. In the Editor, use WASD and mouse; on Android, use the on-screen left movement pad and drag the right side to look.
 
-## Current repository status
-This is the code foundation and setup guide, not a prebuilt APK or a finished game. Unity Editor is required to create/bake scenes and produce the Android build. The repository intentionally contains no copied commercial game assets.
+## Android build
+Install Unity Android Build Support (including Android SDK & NDK Tools and OpenJDK) through Unity Hub. Open Build Settings, select Android, add `Assets/Scenes/Main.unity` to Scenes In Build, switch platform, and build an APK.
 
-## Controls
-- Desktop editor: WASD + mouse look; Space jump.
-- Touch: connect a UI drag area to `TouchLook.SetLookDelta` and on-screen buttons to the movement methods on `FirstPersonController`.
-- The prototype uses fictional arena scoring and abstract hit points. It does not model real-world weapons or tactics.
+## Important status
+This repository now contains the gameplay scripts and a one-click scene generator. The scene generator must be run inside the Unity Editor; a finished APK has **not** been built or tested yet. Unity Editor and Android Build Support are required for the actual Android build. This repository does not contain copied commercial game assets.
+
+## Device tuning
+The default settings favor responsiveness and modest rendering cost. The quality controller exposes Performance, Balanced, and Quality presets. Test on the target phone before release and adjust resolution, lighting, and frame-rate settings based on actual device performance.
