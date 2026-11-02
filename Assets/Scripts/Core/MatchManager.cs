@@ -7,7 +7,7 @@ namespace OfflineFPS.Core
     public enum MatchMode { FreeForAll, TeamChallenge }
     public enum TeamId { Neutral, Blue, Orange }
 
-    // Scores are earned by reaching arena checkpoints, not by combat.
+    // Checkpoint-racing score manager for offline arena matches.
     public class MatchManager : MonoBehaviour
     {
         [Min(1)] public int scoreLimit = 8;
@@ -20,7 +20,6 @@ namespace OfflineFPS.Core
         private int blueScore;
         private int orangeScore;
         private bool ended;
-
         public int BlueScore => blueScore;
         public int OrangeScore => orangeScore;
         public bool IsEnded => ended;
@@ -39,10 +38,9 @@ namespace OfflineFPS.Core
         public void RegisterCheckpoint(string participantId, TeamId team)
         {
             if (ended || string.IsNullOrWhiteSpace(participantId)) return;
-
             if (mode == MatchMode.FreeForAll)
             {
-                int score = playerScores.TryGetValue(participantId, out int old) ? old + 1 : 1;
+                int score = playerScores.TryGetValue(participantId, out int previous) ? previous + 1 : 1;
                 playerScores[participantId] = score;
                 PlayerScoreChanged?.Invoke(participantId, score);
                 if (score >= scoreLimit) End(participantId);
