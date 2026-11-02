@@ -119,8 +119,8 @@ namespace OfflineFPS.EditorTools
             RectTransform moveRect = movePad.GetComponent<RectTransform>();
             moveRect.anchorMin = new Vector2(0f, 0f);
             moveRect.anchorMax = new Vector2(0f, 0f);
-            moveRect.pivot = new Vector2(0f, 0f);
-            moveRect.anchoredPosition = new Vector2(55f, 55f);
+            moveRect.pivot = new Vector2(0.5f, 0.5f);
+            moveRect.anchoredPosition = new Vector2(175f, 175f);
             moveRect.sizeDelta = new Vector2(230f, 230f);
             Image moveImage = movePad.GetComponent<Image>();
             moveImage.color = new Color(0.2f, 0.85f, 0.8f, 0.22f);
