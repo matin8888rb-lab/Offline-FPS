@@ -1,56 +1,65 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace OfflineFPS.Core
 {
-    public enum MatchMode { FreeForAll, TeamDeathmatch }
+    public enum MatchMode { FreeForAll, TeamChallenge }
     public enum TeamId { Neutral, Blue, Orange }
 
+    // Scores are earned by reaching arena checkpoints, not by combat.
     public class MatchManager : MonoBehaviour
     {
-        [Min(1)] public int scoreLimit = 15;
+        [Min(1)] public int scoreLimit = 8;
         public MatchMode mode = MatchMode.FreeForAll;
-        public event Action<TeamId, int> ScoreChanged;
-        public event Action<TeamId> MatchEnded;
+        public event Action<TeamId, int> TeamScoreChanged;
+        public event Action<string, int> PlayerScoreChanged;
+        public event Action<string> MatchEnded;
 
+        private readonly Dictionary<string, int> playerScores = new Dictionary<string, int>();
         private int blueScore;
         private int orangeScore;
         private bool ended;
 
         public int BlueScore => blueScore;
         public int OrangeScore => orangeScore;
+        public bool IsEnded => ended;
 
-        public void StartMatch(MatchMode selectedMode, int limit = 15)
+        public void StartMatch(MatchMode selectedMode, int limit = 8)
         {
             mode = selectedMode;
             scoreLimit = Mathf.Max(1, limit);
             blueScore = orangeScore = 0;
+            playerScores.Clear();
             ended = false;
-            ScoreChanged?.Invoke(TeamId.Blue, blueScore);
-            ScoreChanged?.Invoke(TeamId.Orange, orangeScore);
+            TeamScoreChanged?.Invoke(TeamId.Blue, 0);
+            TeamScoreChanged?.Invoke(TeamId.Orange, 0);
         }
 
-        public void RegisterPoint(TeamId team)
+        public void RegisterCheckpoint(string participantId, TeamId team)
         {
-            if (ended || team == TeamId.Neutral) return;
+            if (ended || string.IsNullOrWhiteSpace(participantId)) return;
 
             if (mode == MatchMode.FreeForAll)
             {
-                // In FFA, each scoring participant is represented by the Orange score
-                // in this small prototype scoreboard.
-                orangeScore++;
+                int score = playerScores.TryGetValue(participantId, out int old) ? old + 1 : 1;
+                playerScores[participantId] = score;
+                PlayerScoreChanged?.Invoke(participantId, score);
+                if (score >= scoreLimit) End(participantId);
+                return;
             }
-            else if (team == TeamId.Blue) blueScore++;
-            else orangeScore++;
 
-            ScoreChanged?.Invoke(TeamId.Blue, blueScore);
-            ScoreChanged?.Invoke(TeamId.Orange, orangeScore);
+            if (team == TeamId.Blue) blueScore++;
+            else if (team == TeamId.Orange) orangeScore++;
+            else return;
 
-            if (blueScore >= scoreLimit) End(TeamId.Blue);
-            else if (orangeScore >= scoreLimit) End(TeamId.Orange);
+            TeamScoreChanged?.Invoke(TeamId.Blue, blueScore);
+            TeamScoreChanged?.Invoke(TeamId.Orange, orangeScore);
+            if (blueScore >= scoreLimit) End("Blue Team");
+            else if (orangeScore >= scoreLimit) End("Orange Team");
         }
 
-        private void End(TeamId winner)
+        private void End(string winner)
         {
             ended = true;
             MatchEnded?.Invoke(winner);
