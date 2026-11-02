@@ -1,48 +1,39 @@
 using UnityEngine;
-using UnityEngine.AI;
 
 namespace OfflineFPS.AI
 {
-    // Non-combat arena rival that follows a checkpoint route.
-    [RequireComponent(typeof(NavMeshAgent))]
+    // Lightweight waypoint rival; no runtime navigation package or network required.
     public class BotAgent : MonoBehaviour
     {
         [SerializeField] private Transform[] routePoints;
-        [SerializeField, Min(0.1f)] private float arriveDistance = 0.8f;
-        private NavMeshAgent agent;
+        [SerializeField, Min(0.2f)] private float moveSpeed = 2.8f;
+        [SerializeField, Min(0.1f)] private float arriveDistance = 0.45f;
         private int nextPoint;
-
-        private void Awake()
-        {
-            agent = GetComponent<NavMeshAgent>();
-            agent.speed = 3.2f;
-            agent.angularSpeed = 360f;
-            agent.acceleration = 12f;
-        }
-
-        private void Start() { nextPoint = 0; SetNextDestination(); }
 
         private void Update()
         {
-            if (routePoints == null || routePoints.Length == 0 || agent == null || !agent.isOnNavMesh) return;
-            if (!agent.pathPending && agent.remainingDistance <= arriveDistance)
+            if (routePoints == null || routePoints.Length == 0) return;
+            Transform target = routePoints[nextPoint];
+            if (target == null) { Advance(); return; }
+
+            Vector3 direction = target.position - transform.position;
+            direction.y = 0f;
+            if (direction.sqrMagnitude <= arriveDistance * arriveDistance) { Advance(); return; }
+
+            if (direction.sqrMagnitude > 0.001f)
             {
-                nextPoint = (nextPoint + 1) % routePoints.Length;
-                SetNextDestination();
+                Quaternion desired = Quaternion.LookRotation(direction.normalized);
+                transform.rotation = Quaternion.Slerp(transform.rotation, desired, 7f * Time.deltaTime);
+                transform.position += direction.normalized * moveSpeed * Time.deltaTime;
             }
         }
 
-        private void SetNextDestination()
+        private void Advance()
         {
-            if (agent == null || !agent.isOnNavMesh || routePoints == null || routePoints.Length == 0) return;
-            for (int i = 0; i < routePoints.Length; i++)
-            {
-                Transform point = routePoints[nextPoint];
-                if (point != null) { agent.SetDestination(point.position); return; }
-                nextPoint = (nextPoint + 1) % routePoints.Length;
-            }
+            if (routePoints == null || routePoints.Length == 0) return;
+            nextPoint = (nextPoint + 1) % routePoints.Length;
         }
 
-        public void SetRoute(Transform[] points) { routePoints = points; nextPoint = 0; SetNextDestination(); }
+        public void SetRoute(Transform[] points) { routePoints = points; nextPoint = 0; }
     }
 }
